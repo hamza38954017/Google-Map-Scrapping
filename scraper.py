@@ -3,6 +3,7 @@ import csv
 import re
 import os
 import requests
+import gc
 from urllib.parse import quote_plus
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -13,143 +14,135 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException,
 from selenium.webdriver.common.keys import Keys
 
 # ---------- CONFIGURATION ----------
+PROXY = "" 
+
+BUSINESS_TYPE = "Doctor"
+OUTPUT_FILE = "businesses.csv"
+OUTPUT_NO_WEBSITE = "businesses_no_website.csv"
+MAX_RESULTS_PER_LOCATION = 100
+DELAY_BETWEEN_LOCATIONS = 5
+
+TELEGRAM_BOT_TOKEN = "8349995675:AAE9grCMm22vWOzmAjlDtpRd4iMR8IQiVgA"
+TELEGRAM_CHAT_ID = "7369364451"
+
 LOCATIONS = [
-    # --- USA (Extra included) ---
+    # --- USA ---
     "New York City, NY", "Los Angeles, CA", "Chicago, IL", "Houston, TX", 
     "Phoenix, AZ", "Philadelphia, PA", "San Antonio, TX", "San Diego, CA", 
     "Dallas, TX", "San Jose, CA", "Austin, TX", "Jacksonville, FL", 
     "Fort Worth, TX", "Columbus, OH", "San Francisco, CA", "Seattle, WA", 
     "Denver, CO", "Washington, DC", "Boston, MA", "Miami, FL",
-
     # --- Canada ---
     "Toronto, ON", "Montreal, QC", "Vancouver, BC", "Calgary, AB", 
     "Edmonton, AB", "Ottawa, ON", "Winnipeg, MB", "Quebec City, QC", 
     "Hamilton, ON", "Halifax, NS",
-
     # --- Australia ---
     "Sydney, Australia", "Melbourne, Australia", "Brisbane, Australia", 
     "Perth, Australia", "Adelaide, Australia", "Gold Coast, Australia", 
     "Newcastle, Australia", "Canberra, Australia", "Sunshine Coast, Australia", 
     "Hobart, Australia",
-
     # --- New Zealand ---
     "Auckland, New Zealand", "Wellington, New Zealand", "Christchurch, New Zealand", 
     "Hamilton, New Zealand", "Tauranga, New Zealand", "Napier-Hastings, New Zealand", 
     "Dunedin, New Zealand", "Palmerston North, New Zealand", "Nelson, New Zealand", 
     "Rotorua, New Zealand",
-
-    # --- UK (Extra included) ---
+    # --- UK ---
     "London, UK", "Birmingham, UK", "Manchester, UK", "Glasgow, UK", 
     "Edinburgh, UK", "Liverpool, UK", "Leeds, UK", "Bristol, UK", 
     "Sheffield, UK", "Newcastle upon Tyne, UK", "Cardiff, UK", "Belfast, UK",
-
-    # --- Germany (Extra included) ---
+    # --- Germany ---
     "Berlin, Germany", "Munich, Germany", "Frankfurt, Germany", 
     "Hamburg, Germany", "Cologne, Germany", "Stuttgart, Germany", 
     "Düsseldorf, Germany", "Leipzig, Germany", "Dortmund, Germany", 
     "Essen, Germany", "Bremen, Germany", "Dresden, Germany",
-
-    # --- France (Extra included) ---
+    # --- France ---
     "Paris, France", "Marseille, France", "Lyon, France", "Toulouse, France", 
     "Nice, France", "Nantes, France", "Montpellier, France", "Strasbourg, France", 
     "Bordeaux, France", "Lille, France", "Rennes, France",
-
-    # --- Italy (Extra included) ---
+    # --- Italy ---
     "Rome, Italy", "Milan, Italy", "Naples, Italy", "Turin, Italy", 
     "Palermo, Italy", "Genoa, Italy", "Bologna, Italy", "Florence, Italy", 
     "Bari, Italy", "Catania, Italy", "Venice, Italy",
-
     # --- Spain ---
     "Madrid, Spain", "Barcelona, Spain", "Valencia, Spain", "Seville, Spain", 
     "Zaragoza, Spain", "Málaga, Spain", "Murcia, Spain", "Palma, Spain", 
     "Las Palmas, Spain", "Bilbao, Spain",
-
     # --- Switzerland ---
     "Zurich, Switzerland", "Geneva, Switzerland", "Basel, Switzerland", 
     "Lausanne, Switzerland", "Bern, Switzerland", "Winterthur, Switzerland", 
     "Lucerne, Switzerland", "St. Gallen, Switzerland", "Lugano, Switzerland", 
     "Biel/Bienne, Switzerland",
-
     # --- Austria ---
     "Vienna, Austria", "Graz, Austria", "Linz, Austria", "Salzburg, Austria", 
     "Innsbruck, Austria", "Klagenfurt, Austria", "Villach, Austria", 
     "Wels, Austria", "Sankt Pölten, Austria", "Dornbirn, Austria",
-
     # --- Belgium ---
     "Brussels, Belgium", "Antwerp, Belgium", "Ghent, Belgium", 
     "Charleroi, Belgium", "Liège, Belgium", "Bruges, Belgium", 
     "Namur, Belgium", "Leuven, Belgium", "Mons, Belgium", "Aalst, Belgium",
-
     # --- Netherlands ---
     "Amsterdam, Netherlands", "Rotterdam, Netherlands", "The Hague, Netherlands", 
     "Utrecht, Netherlands", "Eindhoven, Netherlands", "Groningen, Netherlands", 
     "Tilburg, Netherlands", "Almere, Netherlands", "Breda, Netherlands", 
     "Nijmegen, Netherlands",
-
     # --- Sweden ---
     "Stockholm, Sweden", "Gothenburg, Sweden", "Malmö, Sweden", 
     "Uppsala, Sweden", "Västerås, Sweden", "Örebro, Sweden", 
     "Linköping, Sweden", "Helsingborg, Sweden", "Jönköping, Sweden", 
     "Norrköping, Sweden",
-
     # --- Norway ---
     "Oslo, Norway", "Bergen, Norway", "Trondheim, Norway", "Stavanger, Norway", 
     "Bærum, Norway", "Kristiansand, Norway", "Fredrikstad, Norway", 
     "Sandnes, Norway", "Tromsø, Norway", "Drammen, Norway",
-
     # --- Denmark ---
     "Copenhagen, Denmark", "Aarhus, Denmark", "Odense, Denmark", 
     "Aalborg, Denmark", "Esbjerg, Denmark", "Randers, Denmark", 
     "Kolding, Denmark", "Horsens, Denmark", "Vejle, Denmark", "Roskilde, Denmark",
-
     # --- Finland ---
     "Helsinki, Finland", "Espoo, Finland", "Tampere, Finland", "Vantaa, Finland", 
     "Oulu, Finland", "Turku, Finland", "Jyväskylä, Finland", "Lahti, Finland", 
     "Kuopio, Finland", "Pori, Finland",
-
     # --- Ireland ---
     "Dublin, Ireland", "Cork, Ireland", "Limerick, Ireland", "Galway, Ireland", 
     "Waterford, Ireland", "Drogheda, Ireland", "Dundalk, Ireland", 
     "Bray, Ireland", "Navan, Ireland", "Kilkenny, Ireland",
-
-    # --- Japan (Extra included) ---
+    # --- Japan ---
     "Tokyo, Japan", "Yokohama, Japan", "Osaka, Japan", "Nagoya, Japan", 
     "Sapporo, Japan", "Fukuoka, Japan", "Kobe, Japan", "Kyoto, Japan", 
     "Kawasaki, Japan", "Saitama, Japan", "Hiroshima, Japan", "Sendai, Japan",
-
-    # --- Other Major European Cities (Not explicitly named above) ---
+    # --- Others ---
     "Prague, Czechia", "Warsaw, Poland", "Budapest, Hungary", 
     "Lisbon, Portugal", "Athens, Greece", "Bucharest, Romania",
-
-    # --- Smaller Nations / City-States ---
-    "Singapore, Singapore", "Jurong East, Singapore", "Woodlands, Singapore", # Singapore
-    "Luxembourg City, Luxembourg", "Esch-sur-Alzette, Luxembourg", "Differdange, Luxembourg", # Luxembourg
-    "Reykjavik, Iceland", "Kópavogur, Iceland", "Hafnarfjörður, Iceland", "Akureyri, Iceland" # Iceland
+    "Singapore, Singapore", "Jurong East, Singapore", "Woodlands, Singapore",
+    "Luxembourg City, Luxembourg", "Esch-sur-Alzette, Luxembourg", "Differdange, Luxembourg",
+    "Reykjavik, Iceland", "Kópavogur, Iceland", "Hafnarfjörður, Iceland", "Akureyri, Iceland"
 ]
-BUSINESS_TYPE = "Doctor"
-OUTPUT_FILE = "businesses.csv"
-OUTPUT_NO_WEBSITE = "businesses_no_website.csv"
-MAX_RESULTS_PER_LOCATION = 1000
-DELAY_BETWEEN_LOCATIONS = 5
-
-# Telegram Bot Credentials
-TELEGRAM_BOT_TOKEN = "8349995675:AAE9grCMm22vWOzmAjlDtpRd4iMR8IQiVgA"
-TELEGRAM_CHAT_ID = "7369364451"
 # -----------------------------------
 
 def setup_driver():
-    """Set up headless Chrome driver with desktop user‑agent."""
+    """Set up heavily memory-optimized headless Chrome driver."""
     options = Options()
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--disable-dev-shm-usage') # Crucial for Render
     options.add_argument('--disable-gpu')
+    options.add_argument('--disable-extensions')
+    options.add_argument('--disable-application-cache')
+    options.add_argument('--disable-setuid-sandbox')
     options.add_argument('--window-size=1920,1080')
     options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+    
+    # Disable image loading to save massive amounts of RAM
+    prefs = {"profile.managed_default_content_settings.images": 2}
+    options.add_experimental_option("prefs", prefs)
+    
+    if PROXY:
+        options.add_argument(f'--proxy-server={PROXY}')
+        print(f"🌐 Using Proxy: {PROXY}")
+        
     return webdriver.Chrome(options=options)
 
 def accept_cookies(driver):
-    """Click the 'Accept all' cookie button if it appears."""
     try:
         accept_btn = driver.find_element(By.XPATH, "//button[contains(., 'Accept all')]")
         accept_btn.click()
@@ -159,17 +152,12 @@ def accept_cookies(driver):
         pass
 
 def safe_find_text(parent, selector, default=""):
-    """Safely find element and return its text."""
     try:
         return parent.find_element(By.CSS_SELECTOR, selector).text.strip()
     except:
         return default
 
 def extract_card_data(card):
-    """
-    Extract name, address, rating, review count, price, image URL, and place link
-    from a result card without clicking it.
-    """
     name = safe_find_text(card, ".fontHeadlineSmall")
     if not name:
         name = safe_find_text(card, "h3")
@@ -230,16 +218,12 @@ def extract_card_data(card):
     return name, address, rating, reviews, price, image_url, link
 
 def clean_phone(phone_text):
-    """Remove non‑digit characters except leading + and dash, and trim."""
     if not phone_text:
         return ""
     cleaned = re.sub(r'[^\d\s\+\-]', '', phone_text)
     return cleaned.strip()
 
 def extract_hours_from_panel(driver):
-    """
-    After clicking a card, extract working hours from the opened panel.
-    """
     hours_parts = []
     try:
         WebDriverWait(driver, 2).until(
@@ -259,9 +243,6 @@ def extract_hours_from_panel(driver):
     return "; ".join(hours_parts)
 
 def extract_phone_website_hours(driver, card):
-    """
-    Click the card, wait for details panel, and extract phone, website, and hours.
-    """
     phone = ""
     website = ""
     hours = ""
@@ -300,9 +281,6 @@ def extract_phone_website_hours(driver, card):
     return phone, website, hours
 
 def scroll_to_load(driver, target_count, max_retries=3):
-    """
-    Scroll the feed until we have at least target_count cards.
-    """
     feed = driver.find_element(By.CSS_SELECTOR, "[role='feed']")
     last_count = 0
     retries = 0
@@ -332,9 +310,6 @@ def scroll_to_load(driver, target_count, max_retries=3):
             print(f"📜 Loaded {new_count} cards so far...")
 
 def scrape_location(driver, location):
-    """
-    Perform the full scraping routine for a single location.
-    """
     print(f"\n📍 Scraping location: {location}")
     encoded_business = quote_plus(BUSINESS_TYPE)
     encoded_location = quote_plus(location)
@@ -412,7 +387,6 @@ def scrape_location(driver, location):
     return data_location
 
 def send_to_telegram(file_path):
-    """Uploads the generated CSV file directly to the provided Telegram chat."""
     if not os.path.exists(file_path):
         print(f"⚠️ Could not find {file_path} to upload.")
         return
@@ -442,15 +416,19 @@ def main():
     except FileExistsError:
         pass
 
-    driver = setup_driver()
-    all_data = []
+    total_scraped = 0
 
-    try:
-        for idx, location in enumerate(LOCATIONS, 1):
-            print(f"\n=== Location {idx}/{len(LOCATIONS)}: {location} ===")
+    for idx, location in enumerate(LOCATIONS, 1):
+        print(f"\n=== Location {idx}/{len(LOCATIONS)}: {location} ===")
+        
+        # 1. Start a fresh browser for EVERY location to clear RAM
+        driver = setup_driver() 
+        
+        try:
             location_data = scrape_location(driver, location)
-            all_data.extend(location_data)
+            total_scraped += len(location_data)
 
+            # 2. Append directly to CSVs without holding huge lists in memory
             if location_data:
                 with open(OUTPUT_FILE, 'a', newline='', encoding='utf-8') as f:
                     writer = csv.writer(f)
@@ -464,18 +442,22 @@ def main():
                     if f.tell() == 0:
                         writer.writerow(header)
                     writer.writerows(no_website_data)
+        
+        except Exception as e:
+            print(f"⚠️ Critical error in location {location}: {e}")
+            
+        finally:
+            # 3. Kill the browser and force Python to clear garbage memory
+            driver.quit()
+            gc.collect() 
 
-            if idx < len(LOCATIONS):
-                print(f"⏳ Waiting {DELAY_BETWEEN_LOCATIONS} seconds before next location...")
-                time.sleep(DELAY_BETWEEN_LOCATIONS)
+        if idx < len(LOCATIONS):
+            print(f"⏳ Waiting {DELAY_BETWEEN_LOCATIONS} seconds before next location...")
+            time.sleep(DELAY_BETWEEN_LOCATIONS)
 
-    finally:
-        driver.quit()
-
-    print(f"\n🎉 All done! Total businesses scraped: {len(all_data)}")
+    print(f"\n🎉 All done! Total businesses scraped: {total_scraped}")
     print(f"📁 Combined data saved to '{OUTPUT_FILE}'")
     
-    # Send files to Telegram right after scraping completes
     print("\n📤 Preparing to upload to Telegram...")
     send_to_telegram(OUTPUT_FILE)
     if os.path.exists(OUTPUT_NO_WEBSITE):
