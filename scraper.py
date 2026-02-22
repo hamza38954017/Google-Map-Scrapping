@@ -14,21 +14,122 @@ from selenium.webdriver.common.keys import Keys
 
 # ---------- CONFIGURATION ----------
 LOCATIONS = [
-    "San Francisco, CA",
-    "Los Angeles, CA",
-    "San Diego, CA",
-    "Sacramento, CA",
-    "Fresno, CA",
-    "New York City, NY",
-    "Houston, TX",
-    "Phoenix, AZ"
-    # ... add up to 50
-]
+    # --- USA (Extra included) ---
+    "New York City, NY", "Los Angeles, CA", "Chicago, IL", "Houston, TX", 
+    "Phoenix, AZ", "Philadelphia, PA", "San Antonio, TX", "San Diego, CA", 
+    "Dallas, TX", "San Jose, CA", "Austin, TX", "Jacksonville, FL", 
+    "Fort Worth, TX", "Columbus, OH", "San Francisco, CA", "Seattle, WA", 
+    "Denver, CO", "Washington, DC", "Boston, MA", "Miami, FL",
 
+    # --- Canada ---
+    "Toronto, ON", "Montreal, QC", "Vancouver, BC", "Calgary, AB", 
+    "Edmonton, AB", "Ottawa, ON", "Winnipeg, MB", "Quebec City, QC", 
+    "Hamilton, ON", "Halifax, NS",
+
+    # --- Australia ---
+    "Sydney, Australia", "Melbourne, Australia", "Brisbane, Australia", 
+    "Perth, Australia", "Adelaide, Australia", "Gold Coast, Australia", 
+    "Newcastle, Australia", "Canberra, Australia", "Sunshine Coast, Australia", 
+    "Hobart, Australia",
+
+    # --- New Zealand ---
+    "Auckland, New Zealand", "Wellington, New Zealand", "Christchurch, New Zealand", 
+    "Hamilton, New Zealand", "Tauranga, New Zealand", "Napier-Hastings, New Zealand", 
+    "Dunedin, New Zealand", "Palmerston North, New Zealand", "Nelson, New Zealand", 
+    "Rotorua, New Zealand",
+
+    # --- UK (Extra included) ---
+    "London, UK", "Birmingham, UK", "Manchester, UK", "Glasgow, UK", 
+    "Edinburgh, UK", "Liverpool, UK", "Leeds, UK", "Bristol, UK", 
+    "Sheffield, UK", "Newcastle upon Tyne, UK", "Cardiff, UK", "Belfast, UK",
+
+    # --- Germany (Extra included) ---
+    "Berlin, Germany", "Munich, Germany", "Frankfurt, Germany", 
+    "Hamburg, Germany", "Cologne, Germany", "Stuttgart, Germany", 
+    "Düsseldorf, Germany", "Leipzig, Germany", "Dortmund, Germany", 
+    "Essen, Germany", "Bremen, Germany", "Dresden, Germany",
+
+    # --- France (Extra included) ---
+    "Paris, France", "Marseille, France", "Lyon, France", "Toulouse, France", 
+    "Nice, France", "Nantes, France", "Montpellier, France", "Strasbourg, France", 
+    "Bordeaux, France", "Lille, France", "Rennes, France",
+
+    # --- Italy (Extra included) ---
+    "Rome, Italy", "Milan, Italy", "Naples, Italy", "Turin, Italy", 
+    "Palermo, Italy", "Genoa, Italy", "Bologna, Italy", "Florence, Italy", 
+    "Bari, Italy", "Catania, Italy", "Venice, Italy",
+
+    # --- Spain ---
+    "Madrid, Spain", "Barcelona, Spain", "Valencia, Spain", "Seville, Spain", 
+    "Zaragoza, Spain", "Málaga, Spain", "Murcia, Spain", "Palma, Spain", 
+    "Las Palmas, Spain", "Bilbao, Spain",
+
+    # --- Switzerland ---
+    "Zurich, Switzerland", "Geneva, Switzerland", "Basel, Switzerland", 
+    "Lausanne, Switzerland", "Bern, Switzerland", "Winterthur, Switzerland", 
+    "Lucerne, Switzerland", "St. Gallen, Switzerland", "Lugano, Switzerland", 
+    "Biel/Bienne, Switzerland",
+
+    # --- Austria ---
+    "Vienna, Austria", "Graz, Austria", "Linz, Austria", "Salzburg, Austria", 
+    "Innsbruck, Austria", "Klagenfurt, Austria", "Villach, Austria", 
+    "Wels, Austria", "Sankt Pölten, Austria", "Dornbirn, Austria",
+
+    # --- Belgium ---
+    "Brussels, Belgium", "Antwerp, Belgium", "Ghent, Belgium", 
+    "Charleroi, Belgium", "Liège, Belgium", "Bruges, Belgium", 
+    "Namur, Belgium", "Leuven, Belgium", "Mons, Belgium", "Aalst, Belgium",
+
+    # --- Netherlands ---
+    "Amsterdam, Netherlands", "Rotterdam, Netherlands", "The Hague, Netherlands", 
+    "Utrecht, Netherlands", "Eindhoven, Netherlands", "Groningen, Netherlands", 
+    "Tilburg, Netherlands", "Almere, Netherlands", "Breda, Netherlands", 
+    "Nijmegen, Netherlands",
+
+    # --- Sweden ---
+    "Stockholm, Sweden", "Gothenburg, Sweden", "Malmö, Sweden", 
+    "Uppsala, Sweden", "Västerås, Sweden", "Örebro, Sweden", 
+    "Linköping, Sweden", "Helsingborg, Sweden", "Jönköping, Sweden", 
+    "Norrköping, Sweden",
+
+    # --- Norway ---
+    "Oslo, Norway", "Bergen, Norway", "Trondheim, Norway", "Stavanger, Norway", 
+    "Bærum, Norway", "Kristiansand, Norway", "Fredrikstad, Norway", 
+    "Sandnes, Norway", "Tromsø, Norway", "Drammen, Norway",
+
+    # --- Denmark ---
+    "Copenhagen, Denmark", "Aarhus, Denmark", "Odense, Denmark", 
+    "Aalborg, Denmark", "Esbjerg, Denmark", "Randers, Denmark", 
+    "Kolding, Denmark", "Horsens, Denmark", "Vejle, Denmark", "Roskilde, Denmark",
+
+    # --- Finland ---
+    "Helsinki, Finland", "Espoo, Finland", "Tampere, Finland", "Vantaa, Finland", 
+    "Oulu, Finland", "Turku, Finland", "Jyväskylä, Finland", "Lahti, Finland", 
+    "Kuopio, Finland", "Pori, Finland",
+
+    # --- Ireland ---
+    "Dublin, Ireland", "Cork, Ireland", "Limerick, Ireland", "Galway, Ireland", 
+    "Waterford, Ireland", "Drogheda, Ireland", "Dundalk, Ireland", 
+    "Bray, Ireland", "Navan, Ireland", "Kilkenny, Ireland",
+
+    # --- Japan (Extra included) ---
+    "Tokyo, Japan", "Yokohama, Japan", "Osaka, Japan", "Nagoya, Japan", 
+    "Sapporo, Japan", "Fukuoka, Japan", "Kobe, Japan", "Kyoto, Japan", 
+    "Kawasaki, Japan", "Saitama, Japan", "Hiroshima, Japan", "Sendai, Japan",
+
+    # --- Other Major European Cities (Not explicitly named above) ---
+    "Prague, Czechia", "Warsaw, Poland", "Budapest, Hungary", 
+    "Lisbon, Portugal", "Athens, Greece", "Bucharest, Romania",
+
+    # --- Smaller Nations / City-States ---
+    "Singapore, Singapore", "Jurong East, Singapore", "Woodlands, Singapore", # Singapore
+    "Luxembourg City, Luxembourg", "Esch-sur-Alzette, Luxembourg", "Differdange, Luxembourg", # Luxembourg
+    "Reykjavik, Iceland", "Kópavogur, Iceland", "Hafnarfjörður, Iceland", "Akureyri, Iceland" # Iceland
+]
 BUSINESS_TYPE = "Doctor"
 OUTPUT_FILE = "businesses.csv"
 OUTPUT_NO_WEBSITE = "businesses_no_website.csv"
-MAX_RESULTS_PER_LOCATION = 100
+MAX_RESULTS_PER_LOCATION = 1000
 DELAY_BETWEEN_LOCATIONS = 5
 
 # Telegram Bot Credentials
